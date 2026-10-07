@@ -4,9 +4,41 @@ document.addEventListener("DOMContentLoaded", () => {
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
 
-  // Function to fetch activities from API
-  async function fetchActivities() {
+  function showMessage(message, className) {
+    messageDiv.textContent = message;
+    messageDiv.className = className;
+    messageDiv.classList.remove("hidden");
+
+    setTimeout(() => {
+      messageDiv.classList.add("hidden");
+    }, 5000);
+  }
+
+  async function removeParticipant(activityName, participant) {
     try {
+      const response = await fetch(
+        `/activities/${encodeURIComponent(activityName)}/signup?email=${encodeURIComponent(participant)}`,
+        { method: "DELETE" }
+      );
+      const result = await response.json();
+
+      if (!response.ok) {
+        showMessage(result.detail || "An error occurred", "error");
+        return;
+      }
+
+      showMessage(result.message, "success");
+      await fetchActivities(true);
+    } catch (error) {
+      showMessage("Failed to remove participant. Please try again.", "error");
+      console.error("Error removing participant:", error);
+    }
+  }
+
+  // Function to fetch activities from API
+  async function fetchActivities(preserveSelection = false) {
+    try {
+      const selectedActivity = activitySelect.value;
       const response = await fetch("/activities");
       const activities = await response.json();
 
@@ -59,7 +91,31 @@ document.addEventListener("DOMContentLoaded", () => {
           participantList.className = "participant-list";
           details.participants.forEach((participant) => {
             const listItem = document.createElement("li");
-            listItem.textContent = participant;
+            const participantName = document.createElement("span");
+            participantName.textContent = participant;
+            listItem.appendChild(participantName);
+
+            const removeButton = document.createElement("button");
+            removeButton.type = "button";
+            removeButton.className = "participant-remove";
+            removeButton.setAttribute("aria-label", `Remove ${participant} from ${name}`);
+            removeButton.title = `Remove ${participant}`;
+
+            const removeIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            removeIcon.setAttribute("viewBox", "0 0 24 24");
+            removeIcon.setAttribute("aria-hidden", "true");
+            removeIcon.setAttribute("focusable", "false");
+            const iconPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            iconPath.setAttribute(
+              "d",
+              "M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"
+            );
+            removeIcon.appendChild(iconPath);
+            removeButton.appendChild(removeIcon);
+            removeButton.addEventListener("click", () => {
+              removeParticipant(name, participant);
+            });
+            listItem.appendChild(removeButton);
             participantList.appendChild(listItem);
           });
           participantsSection.appendChild(participantList);
@@ -80,6 +136,10 @@ document.addEventListener("DOMContentLoaded", () => {
         option.textContent = name;
         activitySelect.appendChild(option);
       });
+
+      if (preserveSelection) {
+        activitySelect.value = selectedActivity;
+      }
     } catch (error) {
       activitiesList.innerHTML = "<p>Failed to load activities. Please try again later.</p>";
       console.error("Error fetching activities:", error);
@@ -104,25 +164,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await response.json();
 
       if (response.ok) {
-        messageDiv.textContent = result.message;
-        messageDiv.className = "success";
+        showMessage(result.message, "success");
         signupForm.reset();
         await fetchActivities();
       } else {
-        messageDiv.textContent = result.detail || "An error occurred";
-        messageDiv.className = "error";
+        showMessage(result.detail || "An error occurred", "error");
       }
-
-      messageDiv.classList.remove("hidden");
-
-      // Hide message after 5 seconds
-      setTimeout(() => {
-        messageDiv.classList.add("hidden");
-      }, 5000);
     } catch (error) {
-      messageDiv.textContent = "Failed to sign up. Please try again.";
-      messageDiv.className = "error";
-      messageDiv.classList.remove("hidden");
+      showMessage("Failed to sign up. Please try again.", "error");
       console.error("Error signing up:", error);
     }
   });

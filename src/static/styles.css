@@ -109,10 +109,15 @@ section h3 {
 }
 
 .participant-list {
-  padding-left: 20px;
+  padding: 0;
+  list-style: none;
 }
 
 .participant-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   overflow-wrap: anywhere;
 }
 
@@ -120,8 +125,36 @@ section h3 {
   margin-top: 5px;
 }
 
-.participant-list li::marker {
-  color: #3949ab;
+.participant-remove {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 5px;
+  background: transparent;
+  color: #b42318;
+  line-height: 1;
+}
+
+.participant-remove:hover {
+  background: #ffebee;
+  color: #8f1d14;
+}
+
+.participant-remove:focus-visible {
+  outline: 2px solid #3949ab;
+  outline-offset: 2px;
+}
+
+.participant-remove svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
 }
 
 .participants-empty {
